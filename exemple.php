@@ -1,7 +1,7 @@
 <? 
 include_once __DIR__.'/db.php';
 
-#set connection
+// #set connection
 $db = new MYSQLDB('localhost', 'test', 'root', '');
 
 /*⸻⸻⸻⸻⸻⸻⸻
@@ -212,5 +212,62 @@ if(!$db->send){
     err_line: 96
     */
 }
+
+/*⸻⸻⸻⸻⸻⸻⸻
+    exemple №9 - check table items       
+⸻⸻⸻⸻⸻⸻⸻*/
+
+#Check the table for data
+$a = $db->check('users', '*');
+
+if($a){
+    echo "var $.a = the table 'users' has elements<br>";
+}else{
+    echo "var $.a = the table 'users' has't elements<br>";
+}
+
+$b = $db->check('users', '*', 'id = 5');
+if($b){
+    echo "var $.b = the table 'users' where id = 5 has elements<br>";
+}else{
+    echo "var $.b = the table 'users' where id = 5 has't elements<br>";
+}
+
+
+/* 
+RESULT
+var $.a = the table 'users' has elements
+
+var $.b = the table 'users' where id = 5 has't elements
+*/
+
+/*⸻⸻⸻⸻⸻⸻⸻
+    exemple №10 - save log file       
+⸻⸻⸻⸻⸻⸻⸻*/
+//You can save either a ready-made array or a homemade one
+$a = $db->select('asd', 'dsa'); //in my db dosen't have table 'asd'
+if(!$db->send){
+    $db->path = __DIR__.'./error.log';
+    $db->crateLog($a);
+
+    //or
+
+    $a['exemple data'] = 'exemple data';
+    $db->crateLog($a);
+
+    //or
+
+    $array = [1, 2, 3];
+    $db->crateLog($array);
+}
+
+
+/*
+RESULT
+26.09.2023 15:42 | 42S02 | SQLSTATE[42S02]: Base table or view not found: 1146 Table 'test.asd' doesn't exist | 248 | D:\OSPanel\domains\db_php\exemple.php
+26.09.2023 15:42 | 42S02 | SQLSTATE[42S02]: Base table or view not found: 1146 Table 'test.asd' doesn't exist | 248 | D:\OSPanel\domains\db_php\exemple.php | exemple data
+1 | 2 | 3
+
+*/
 
 ?>

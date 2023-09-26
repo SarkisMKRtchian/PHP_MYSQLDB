@@ -10,11 +10,12 @@
  */
 class MYSQLDB{
     
-    private $host;
-    private $database;
-    private $username;
-    private $password;
-    public $send;
+    private string $host;
+    private string $database;
+    private string $username;
+    private string $password;
+    public string $path;
+    public bool $send;
 
     function __construct(string $host, string $database, string $username, string $password){
         $this->host = $host;
@@ -47,28 +48,25 @@ class MYSQLDB{
 
     /**
      * select items from db
-     * @param string $from db name 
+     * @param string $table table name 
      * @param string $columns the names of the columns to be selected or '*' select all
      * @return array object with your column name columns
      */
-    public function select(string $from, string $columns) {
+    public function select(string $table, string $columns) {
         try{
-            $sql = "SELECT $columns FROM $from";
+            $sql = "SELECT $columns FROM $table";
             $db_items = $this->conect()->query($sql)->fetchAll();
-            $items = [];
-            foreach($db_items as $key){
-                $items[] = array_unique($key);
-            }
             $this->send = true;
-            return $items;
+            return $db_items;
         }catch(PDOException $err){
             $err_code = $err->getCode();
             $err_message = $err->getMessage();
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
-                'err_code' => $err_code,
-                'err_message' => $err_message,
+                'time' => date('d.m.Y H:i'),
+                'code' => $err_code,
+                'message' => $err_message,
                 'line' => $line,
                 'file' => $file
             ];
@@ -86,20 +84,17 @@ class MYSQLDB{
         try{
             $sql = "DESC `$table`";
             $col_names = $this->conect()->query($sql)->fetchAll();
-            $items = [];
-            foreach($col_names as $key){
-                $items[] = array_unique($key);
-            }
             $this->send = true;
-            return $items;
+            return $col_names;
         }catch(PDOException $err){
             $err_code = $err->getCode();
             $err_message = $err->getMessage();
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
-                'err_code' => $err_code,
-                'err_message' => $err_message,
+                'time' => date('d.m.Y H:i'),
+                'code' => $err_code,
+                'message' => $err_message,
                 'line' => $line,
                 'file' => $file
             ];
@@ -131,20 +126,17 @@ class MYSQLDB{
                 $sql .= " AND column_name = '$column'";
             }
             $data = $this->conect()->query($sql)->fetchAll();
-            $items = [];
-            foreach($data as $key){
-                $items[] = array_unique($key);
-            }
             $this->send = true;
-            return $items;
+            return $data;
         }catch(PDOException $err){
             $err_code = $err->getCode();
             $err_message = $err->getMessage();
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
-                'err_code' => $err_code,
-                'err_message' => $err_message,
+                'time' => date('d.m.Y H:i'),
+                'code' => $err_code,
+                'message' => $err_message,
                 'line' => $line,
                 'file' => $file
             ];
@@ -198,6 +190,7 @@ class MYSQLDB{
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
+                'time' => date('d.m.Y H:i'),
                 'code' => $err_code,
                 'message' => $err_message,
                 'line' => $line,
@@ -244,6 +237,7 @@ class MYSQLDB{
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
+                'time' => date('d.m.Y H:i'),
                 'code' => $err_code,
                 'message' => $err_message,
                 'line' => $line,
@@ -269,6 +263,41 @@ class MYSQLDB{
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
+                'time' => 'time: ' . date('d.m.Y H:i'),
+                'code' => 'code: ' . $err_code,
+                'message' => 'message' . $err_message,
+                'line' => 'line: ' . $line,
+                'file' => 'file: ' . $file
+            ];
+            $this->send = false;
+            return $error;
+        }
+    }
+
+
+    /**
+     * Check table items
+     * @param string $table table name
+     * @param string $data  data to be cheked
+     * @param string $cla_value specific columns exp(id = 1)
+     * @return boolean if table has elements return true. else return false
+     */
+    public function check(string $table, string $data, string $col_value = null): bool{
+        try{
+            $col_value != null ? $table .= " WHERE $col_value" : "";
+            $data = $this->select($table, $data);
+            $this->send = true;
+            $hasItems = false;
+            
+            empty($data) ? $hasItems = false : $hasItems =  true;
+            return $hasItems;
+        }catch(PDOException $err){
+            $err_code = $err->getCode();
+            $err_message = $err->getMessage();
+            $line = debug_backtrace()[0]['line'];
+            $file = debug_backtrace()[0]['file'];
+            $error = [
+                'time' => date('d.m.Y H:i'),
                 'code' => $err_code,
                 'message' => $err_message,
                 'line' => $line,
@@ -312,6 +341,7 @@ class MYSQLDB{
             $line = debug_backtrace()[0]['line'];
             $file = debug_backtrace()[0]['file'];
             $error = [
+                'time' => date('d.m.Y H:i'),
                 'code' => $err_code,
                 'message' => $err_message,
                 'line' => $line,
@@ -320,6 +350,14 @@ class MYSQLDB{
             $this->send = false;
             return $error;
         }
+    }
+
+    /**
+     * create a log file
+     */
+    public function crateLog(array $data){
+        $log = implode(" | ", $data);
+        file_put_contents($this->path, $log."\n", FILE_APPEND);
     }
 }
     
