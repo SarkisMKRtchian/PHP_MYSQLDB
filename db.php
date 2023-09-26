@@ -28,6 +28,7 @@ class MYSQLDB{
         try{
             $conn = new PDO("mysql:host=$this->host; dbname=$this->database", $this->username, $this->password);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->query("SET NAMES 'utf8'");
             $this->send = true;
             return $conn;
         }catch(PDOException $err){
